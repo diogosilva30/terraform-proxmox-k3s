@@ -82,7 +82,7 @@ resource "proxmox_vm_qemu" "k3s-db" {
 locals {
   # Create the datastore endpoint for the cluster
   datastore_endpoint = "mysql://${local.db_user}:${random_password.db_password.result}@tcp(${proxmox_vm_qemu.k3s-db.ssh_host}:${local.db_port})/${local.db}"
-  node_count = var.server_node_count + var.agent_node_count
+  node_count         = var.server_node_count + var.agent_node_count
 }
 
 
@@ -171,57 +171,57 @@ resource "proxmox_vm_qemu" "k3s-nodes" {
 
 }
 
-resource "null_resource" "configure_dns_servers" {
-  # This configuration is needed because we will deploy Pihole as DNS on port 53
-  # and the VM will be unable to perform DNS lookups because the default nameserver
-  # is "127.0.0.53". We need to set it to an upstream server such as Google, Cloudflare
-  count = local.node_count
-  # Trigger to always run this resource
-  triggers = {
-    always_run = timestamp()
-  }
-  # And run only after nodes have been provisioned
-  depends_on = [proxmox_vm_qemu.k3s-nodes]
+# resource "null_resource" "configure_dns_servers" {
+#   # This configuration is needed because we will deploy Pihole as DNS on port 53
+#   # and the VM will be unable to perform DNS lookups because the default nameserver
+#   # is "127.0.0.53". We need to set it to an upstream server such as Google, Cloudflare
+#   count = local.node_count
+#   # Trigger to always run this resource
+#   triggers = {
+#     always_run = timestamp()
+#   }
+#   # And run only after nodes have been provisioned
+#   depends_on = [proxmox_vm_qemu.k3s-nodes]
 
-  # Specify connection variables for remote execution
-  connection {
-    type        = "ssh"
-    host        = proxmox_vm_qemu.k3s-nodes[count.index].ssh_host
-    user        = proxmox_vm_qemu.k3s-nodes[count.index].ssh_user
-    private_key = proxmox_vm_qemu.k3s-nodes[count.index].ssh_private_key
-    port        = proxmox_vm_qemu.k3s-nodes[count.index].ssh_port
-    timeout     = "10m"
-  }
-  provisioner "remote-exec" {
-    inline = [
-      # Based on https://askubuntu.com/a/1346001
-      # Make sure cloudflare is setup as nameserver, otherwise apt update and install commands wont work
-      "if ! grep -q 'nameserver 1.1.1.1' /etc/resolv.conf; then echo 'nameserver 1.1.1.1' | sudo tee /etc/resolv.conf; fi",
-      "sudo apt update -y -qq 2>/dev/null >/dev/null;",
-      "sudo apt install resolvconf -y -qq 2>/dev/null >/dev/null;",
-      # Only add nameservers to file if they don't exist already
-      "grep -qxF 'nameserver 1.1.1.1' /etc/resolvconf/resolv.conf.d/head || echo 'nameserver 1.1.1.1' | sudo tee -a /etc/resolvconf/resolv.conf.d/head",
-      "grep -qxF 'nameserver 8.8.8.8' /etc/resolvconf/resolv.conf.d/head || echo 'nameserver 8.8.8.8' | sudo tee -a /etc/resolvconf/resolv.conf.d/head",
-      "sudo systemctl restart resolvconf.service",
-      "sudo systemctl restart systemd-resolved",
-      # Enable qemu guest agent
-      "sudo systemctl enable --now qemu-guest-agent"
-    ]
-  }
-}
+#   # Specify connection variables for remote execution
+#   connection {
+#     type        = "ssh"
+#     host        = proxmox_vm_qemu.k3s-nodes[count.index].ssh_host
+#     user        = proxmox_vm_qemu.k3s-nodes[count.index].ssh_user
+#     private_key = proxmox_vm_qemu.k3s-nodes[count.index].ssh_private_key
+#     port        = proxmox_vm_qemu.k3s-nodes[count.index].ssh_port
+#     timeout     = "10m"
+#   }
+#   provisioner "remote-exec" {
+#     inline = [
+#       # Based on https://askubuntu.com/a/1346001
+#       # Make sure cloudflare is setup as nameserver, otherwise apt update and install commands wont work
+#       "if ! grep -q 'nameserver 1.1.1.1' /etc/resolv.conf; then echo 'nameserver 1.1.1.1' | sudo tee /etc/resolv.conf; fi",
+#       "sudo apt update -y -qq 2>/dev/null >/dev/null;",
+#       "sudo apt install resolvconf -y -qq 2>/dev/null >/dev/null;",
+#       # Only add nameservers to file if they don't exist already
+#       "grep -qxF 'nameserver 1.1.1.1' /etc/resolvconf/resolv.conf.d/head || echo 'nameserver 1.1.1.1' | sudo tee -a /etc/resolvconf/resolv.conf.d/head",
+#       "grep -qxF 'nameserver 8.8.8.8' /etc/resolvconf/resolv.conf.d/head || echo 'nameserver 8.8.8.8' | sudo tee -a /etc/resolvconf/resolv.conf.d/head",
+#       "sudo systemctl restart resolvconf.service",
+#       "sudo systemctl restart systemd-resolved",
+#       # Enable qemu guest agent
+#       "sudo systemctl enable --now qemu-guest-agent"
+#     ]
+#   }
+# }
 
-# Create a bucket
-resource "aws_s3_bucket" "k3s" {
-  bucket = "k3s"
-  acl    = "private" # or can be "public-read"
-  tags = {
-    Name = "Kubernetes cluster"
-  }
-  depends_on = [proxmox_vm_qemu.k3s-nodes]
-}
-# Upload the KUBECONFIG to s3
-resource "aws_s3_object" "kubeconfig" {
-  bucket = aws_s3_bucket.k3s.id
-  key    = "kubeconfig"
-  source = "./kubeconfig"
-}
+# # Create a bucket
+# resource "aws_s3_bucket" "k3s" {
+#   bucket = "k3s"
+#   acl    = "private" # or can be "public-read"
+#   tags = {
+#     Name = "Kubernetes cluster"
+#   }
+#   depends_on = [proxmox_vm_qemu.k3s-nodes]
+# }
+# # Upload the KUBECONFIG to s3
+# resource "aws_s3_object" "kubeconfig" {
+#   bucket = aws_s3_bucket.k3s.id
+#   key    = "kubeconfig"
+#   source = "./kubeconfig"
+# }
