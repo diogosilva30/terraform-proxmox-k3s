@@ -175,7 +175,7 @@ resource "null_resource" "configure_dns_servers" {
   # This configuration is needed because we will deploy Pihole as DNS on port 53
   # and the VM will be unable to perform DNS lookups because the default nameserver
   # is "127.0.0.53". We need to set it to an upstream server such as Google, Cloudflare
-  count = var.node_count
+  count = local.node_count
   # Trigger to always run this resource
   triggers = {
     always_run = timestamp()
