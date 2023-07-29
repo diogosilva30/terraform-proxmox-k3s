@@ -1,10 +1,4 @@
 terraform {
-  backend "cloud" {
-    organization = "dsilva"
-    workspaces {
-      name = "k3s-kubernetes"
-    }
-  }
   required_providers {
     # https://github.com/Telmate/terraform-provider-proxmox
     proxmox = {
@@ -23,13 +17,6 @@ provider "proxmox" {
   pm_api_token_id     = var.proxmox_api_token_id
   pm_api_token_secret = var.proxmox_api_token_secret
   pm_tls_insecure     = true
-  pm_log_enable       = true
-  pm_log_file         = "terraform-plugin-proxmox.log"
-  pm_debug            = true
-  pm_log_levels = {
-    _default    = "debug"
-    _capturelog = ""
-  }
 }
 provider "aws" {
   s3_use_path_style           = true
@@ -37,8 +24,4 @@ provider "aws" {
   skip_credentials_validation = true
   skip_requesting_account_id  = true
   skip_metadata_api_check     = true
-
-  endpoints {
-    s3 = "https://s3-api.dsilva.dev"
-  }
 }
