@@ -17,7 +17,7 @@ locals {
 
 # Create the VM that will contain the database
 resource "proxmox_vm_qemu" "k3s-db" {
-  name        = "k3s-db"
+  name        = "${var.cluster_name}-k3s-db"
   desc        = "Kubernetes MariaDB database. User: ${local.db_user} | Password: ${local.db_password} | DB: ${local.db}"
   target_node = "proxmox"
 
@@ -89,7 +89,7 @@ locals {
 resource "proxmox_vm_qemu" "k3s-nodes" {
   depends_on  = [proxmox_vm_qemu.k3s-db]
   count       = local.node_count
-  name        = "k3s-${count.index}"
+  name        = "${var.cluster_name}-k3s-${count.index}"
   desc        = "Kubernetes node ${count.index}"
   target_node = "proxmox"
 

@@ -1,3 +1,7 @@
+variable "cluster_name" {
+  description = "The name of your kubernetes cluster. Used for VM naming."
+  type        = string
+}
 variable "proxmox_api_token_secret" {
   description = "The secret API token for authenticating with the Proxmox API."
   type        = string
