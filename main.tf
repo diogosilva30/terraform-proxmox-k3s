@@ -95,7 +95,7 @@ resource "proxmox_vm_qemu" "k3s-nodes" {
 
   # Hardware configuration
   agent   = 1
-  clone   = "ubuntu-server-jammy"
+  clone   = var.proxmox_vm_image_name
   cores   = var.cores
   memory  = var.memory
   balloon = 512
