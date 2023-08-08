@@ -1,7 +1,7 @@
 # Terraform Module: Kubernetes Cluster on Proxmox with k3s
 
 ![Terraform Version](https://img.shields.io/badge/Terraform-%3E%3D0.12-blueviolet)
-![GitHub License](https://img.shields.io/github/license/yourusername/terraform-k3s-proxmox)
+![GitHub License](https://img.shields.io/github/license/diogosilva30/terraform-k3s-proxmox)
 
 ## Description
 
