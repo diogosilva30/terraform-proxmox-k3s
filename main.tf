@@ -157,7 +157,7 @@ resource "proxmox_vm_qemu" "k3s-nodes" {
       fi
 
       # Cleanup private key
-      rm privkey
+      rm -f privkey
     EOT
   }
 
