@@ -2,17 +2,7 @@ variable "cluster_name" {
   description = "The name of your kubernetes cluster. Used for VM naming."
   type        = string
 }
-variable "proxmox_api_token_secret" {
-  description = "The secret API token for authenticating with the Proxmox API."
-  type        = string
-  sensitive   = true
-}
 
-variable "proxmox_api_token_id" {
-  description = "The ID of the API token for authenticating with the Proxmox API."
-  type        = string
-  sensitive   = true
-}
 
 variable "proxmox_vm_image_name" {
   description = "The name of the Proxmox template/image to clone when creating the VMs for the Kubernetes nodes."
@@ -25,10 +15,10 @@ variable "mariadb_database_size" {
   default     = "20G"
 }
 
-variable "proxmox_api_url" {
-  description = "The URL of the Proxmox API endpoint."
+variable "k3s_extra_args" {
+  description = "Extra arguments to pass to the k3s server."
   type        = string
-  sensitive   = true
+  default     = ""
 }
 
 variable "server_node_count" {

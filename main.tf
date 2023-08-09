@@ -8,11 +8,10 @@ resource "random_password" "db_password" {
 }
 
 locals {
-  kubeconfig_path = "${path.module}/kubeconfig"
-  db_user         = "k3s"
-  db              = "kubernetes"
-  db_port         = 3306
-  db_password     = random_password.db_password.result
+  db_user     = "k3s"
+  db          = "kubernetes"
+  db_port     = 3306
+  db_password = random_password.db_password.result
 }
 
 # Create the VM that will contain the database
@@ -84,7 +83,12 @@ locals {
   datastore_endpoint = "mysql://${local.db_user}:${random_password.db_password.result}@tcp(${proxmox_vm_qemu.k3s-db.ssh_host}:${local.db_port})/${local.db}"
   node_count         = var.server_node_count + var.agent_node_count
 }
-
+# Create the file with the private SSH key
+resource "local_sensitive_file" "private_key_file" {
+  filename        = "${path.module}/private_key"
+  content         = var.ssh_private_key
+  file_permission = "0600"
+}
 
 resource "proxmox_vm_qemu" "k3s-nodes" {
   depends_on  = [proxmox_vm_qemu.k3s-db]
@@ -130,34 +134,28 @@ resource "proxmox_vm_qemu" "k3s-nodes" {
   # Provision the kubernetes cluster with k3sup
   provisioner "local-exec" {
     command = <<-EOT
-      # Generate SSH private key file
-      echo "${self.ssh_private_key}" > privkey
-      chmod 600 privkey
-
-      # First two nodes are server nodes for High Availability setup.
+    
+      # First n nodes are server nodes for High Availability setup.
       # The next nodes are just agent nodes for deploying workloads
       if [ "${count.index}" -lt "${var.server_node_count}" ]; then
         echo "Installing server node"
         k3sup install --ip ${self.ssh_host} \
-          --k3s-extra-args "--disable local-storage" \
+          --k3s-extra-args "${var.k3s_extra_args}" \
           --user ${self.ssh_user} \
-          --ssh-key privkey \
+          --ssh-key ${local_sensitive_file.private_key_file.filename} \
           --k3s-version ${var.k3s_version} \
           --datastore="${local.datastore_endpoint}" \
-          --token=${random_id.k3s_token.b64_std} \ 
-          --local-path="${local.kubeconfig_path}"
+          --token=${random_id.k3s_token.b64_std}
       else
         echo "Installing agent node"
         k3sup join --ip ${self.ssh_host} \
           --user ${self.ssh_user} \
           --server-user ${self.ssh_user} \
-          --ssh-key privkey \
+          --ssh-key ${local_sensitive_file.private_key_file.filename} \
           --k3s-version ${var.k3s_version} \
           --server-ip ${proxmox_vm_qemu.k3s-nodes[0].ssh_host}
       fi
 
-      # Cleanup private key
-      rm -f privkey
     EOT
   }
 
@@ -171,12 +169,31 @@ resource "proxmox_vm_qemu" "k3s-nodes" {
 
 }
 
-data "local_file" "kubeconfig" {
-  depends_on = [proxmox_vm_qemu.k3s-nodes]
-  filename   = local.kubeconfig_path
-}
 locals {
-  kubeconfig             = data.local_file.kubeconfig.content
+  # Get the IP of the first node
+  master_node_ip = resource.proxmox_vm_qemu.k3s-nodes[0].ssh_host
+}
+data "external" "kubeconfig" {
+  # Connect to the first node and get the kubeconfig
+  depends_on = [
+    proxmox_vm_qemu.k3s-nodes,
+  ]
+
+  program = [
+    "ssh",
+    "-i",
+    "${local_sensitive_file.private_key_file.filename}",
+    "-o",
+    "UserKnownHostsFile=/dev/null",
+    "-o",
+    "StrictHostKeyChecking=no",
+    "${var.ciuser}@${local.master_node_ip}",
+    "echo '{\"kubeconfig\":\"'$(sudo cat /etc/rancher/k3s/k3s.yaml | base64)'\"}'"
+  ]
+}
+
+locals {
+  kubeconfig             = replace(base64decode(replace(data.external.kubeconfig.result.kubeconfig, " ", "")), "server: https://127.0.0.1:6443", "server: https://${local.master_node_ip}:6443")
   host                   = proxmox_vm_qemu.k3s-nodes[0].ssh_host
   token                  = random_id.k3s_token.b64_std
   cluster_ca_certificate = yamldecode(local.kubeconfig).clusters[0].cluster.certificate-authority-data
