@@ -1,3 +1,8 @@
+output "kubeconfig" {
+  value       = local.kubeconfig
+  description = "Raw kubeconfig"
+  sensitive   = true
+}
 output "host" {
   value       = local.host
   description = "The deployed kubernetes host"

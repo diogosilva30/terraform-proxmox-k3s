@@ -171,11 +171,13 @@ resource "proxmox_vm_qemu" "k3s-nodes" {
 
 }
 
-locals {
-  # Implicitly depends on the nodes to be created
-  host                   = proxmox_vm_qemu.k3s-nodes[0].ssh_host
-  cluster_ca_certificate = regex("certificate-authority-data:\\s*([A-Za-z0-9+\\/=\\s]+?)(?=\\s+server:|$)", file(local.kubeconfig_path))[0]
-  token                  = random_id.k3s_token.b64_std
+data "local_file" "kubeconfig" {
+  depends_on = [proxmox_vm_qemu.k3s-nodes]
+  filename   = local.kubeconfig_path
 }
-
-
+locals {
+  kubeconfig             = data.local_file.kubeconfig.content
+  host                   = proxmox_vm_qemu.k3s-nodes[0].ssh_host
+  token                  = random_id.k3s_token.b64_std
+  cluster_ca_certificate = yamldecode(local.kubeconfig).clusters[0].cluster.certificate-authority-data
+}
