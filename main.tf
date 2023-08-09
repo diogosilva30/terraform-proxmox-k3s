@@ -194,7 +194,7 @@ data "external" "kubeconfig" {
 
 locals {
   kubeconfig             = replace(base64decode(replace(data.external.kubeconfig.result.kubeconfig, " ", "")), "server: https://127.0.0.1:6443", "server: https://${local.master_node_ip}:6443")
-  host                   = proxmox_vm_qemu.k3s-nodes[0].ssh_host
+  host                   = yamldecode(local.kubeconfig).clusters[0].cluster.server
   token                  = random_id.k3s_token.b64_std
   cluster_ca_certificate = yamldecode(local.kubeconfig).clusters[0].cluster.certificate-authority-data
 }
