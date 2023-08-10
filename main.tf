@@ -197,4 +197,6 @@ locals {
   host                   = yamldecode(local.kubeconfig).clusters[0].cluster.server
   token                  = random_id.k3s_token.b64_std
   cluster_ca_certificate = yamldecode(local.kubeconfig).clusters[0].cluster.certificate-authority-data
+  client_certificate     = yamldecode(local.kubeconfig).users[0].user.client-certificate-data
+  client_key             = yamldecode(local.kubeconfig).users[0].user.client-key-data
 }

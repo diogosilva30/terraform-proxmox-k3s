@@ -18,6 +18,16 @@ output "cluster_ca_certificate" {
   description = "Kubernetes CA Certificate"
   sensitive   = true
 }
+output "client_certificate" {
+  value       = local.client_certificate
+  description = "Kubernetes Client Certificate"
+  sensitive   = true
+}
+output "client_key" {
+  value       = local.client_key
+  description = "Kubernetes Client Key"
+  sensitive   = true
+}
 output "server_ips" {
   value = proxmox_vm_qemu.k3s-nodes.*.ssh_host
 }
