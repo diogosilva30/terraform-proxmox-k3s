@@ -72,13 +72,13 @@ variable "ciuser" {
   type        = string
 }
 
-variable "ssh_keys" {
-  description = "The SSH public key to add to the authorized_keys file of the default user on the Kubernetes nodes."
+variable "ssh_public_key_path" {
+  description = "The path of the SSH public key to add the authorized_keys file of the default user on the Kubernetes nodes."
   type        = string
 }
 
-variable "ssh_private_key" {
-  description = "The private SSH key that Terraform will use to SSH into the Kubernetes nodes."
+variable "ssh_private_key_path" {
+  description = "The private SSH key path that Terraform will use to SSH into the Kubernetes nodes."
   sensitive   = true
   type        = string
 }
