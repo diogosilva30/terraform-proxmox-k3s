@@ -85,9 +85,9 @@ locals {
 }
 # Create the file with the private SSH key
 resource "local_sensitive_file" "private_key_file" {
-  filename        = "${path.module}/private_key"
+  filename        = "private_key"
   content         = var.ssh_private_key
-  file_permission = "0600"
+  file_permission = "0666"
 }
 
 resource "proxmox_vm_qemu" "k3s-nodes" {
