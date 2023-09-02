@@ -19,6 +19,7 @@ resource "proxmox_vm_qemu" "k3s-db" {
   name        = "${var.cluster_name}-k3s-db"
   desc        = "Kubernetes MariaDB database. User: ${local.db_user} | Password: ${local.db_password} | DB: ${local.db}"
   target_node = "proxmox"
+  onboot      = var.onboot
 
   # Hardware configuration
   agent   = 1
@@ -87,6 +88,7 @@ locals {
 
 resource "proxmox_vm_qemu" "k3s-nodes" {
   depends_on  = [proxmox_vm_qemu.k3s-db]
+  onboot      = var.onboot
   count       = local.node_count
   name        = "${var.cluster_name}-k3s-${count.index}"
   desc        = "Kubernetes node ${count.index}"

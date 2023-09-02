@@ -65,7 +65,11 @@ variable "cores" {
   type        = number
   default     = 4
 }
-
+variable "onboot" {
+  description = "Whether the VM should be started during system bootup."
+  type        = bool
+  default     = true
+}
 # SSH configuration
 variable "ciuser" {
   description = "The name of the default user that should be created on the Kubernetes nodes."
