@@ -8,6 +8,11 @@ variable "proxmox_vm_image_name" {
   description = "The name of the Proxmox template/image to clone when creating the VMs for the Kubernetes nodes."
   type        = string
 }
+variable "mariadb_memory" {
+  description = "The amount of memory (RAM) for the MariaDB control plane database in megabytes (MB). E.g. 2048"
+  type        = number
+  default     = 512
+}
 
 variable "mariadb_database_size" {
   description = "The size of the MariaDB control plane database volume in Kubernetes. This value should be fixed and not user-configurable."

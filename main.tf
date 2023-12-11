@@ -25,8 +25,7 @@ resource "proxmox_vm_qemu" "k3s-db" {
   agent   = 1
   clone   = var.proxmox_vm_image_name
   cores   = 1
-  memory  = 1024
-  balloon = 512
+  memory  = var.mariadb_memory
   sockets = 1
   cpu     = "host"
   disk {
